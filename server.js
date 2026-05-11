@@ -6,13 +6,14 @@ const cors = require("cors");
 
 const app = express();
 
+// SIMPLE CORS
 app.use(cors());
 
-// ✅ 1. JSON PARSER (SABSE PEHLE)
+// BODY PARSER
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ 2. ROUTES (BAAD ME)
+// ROUTES
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
@@ -27,21 +28,32 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/address", addressRoutes);
 
-// 🔥 STATIC UPLOADS
+// STATIC UPLOADS
 app.use("/uploads", express.static("uploads"));
 
-
-// ✅ TEST ROUTE
+// TEST ROUTE
 app.get("/", (req, res) => {
   res.send("API Running...");
 });
 
-// DB
-mongoose.connect("mongodb://127.0.0.1:27017/ecommerce")
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+// DATABASE CONNECTION (Updated with Timeouts)
+mongoose
+  .connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000, // Wait 5 seconds before timing out
+    socketTimeoutMS: 45000,         // Close connection after 45 seconds of inactivity
+  })
+  .then(() => {
+    console.log("✅ MongoDB Atlas Connected Successfully");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB Connection Error Details:");
+    console.error("Message:", err.message);
+    console.error("Reason:", err.reason ? err.reason.type : "Unknown");
+  });
 
 // SERVER
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
